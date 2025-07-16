@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe Game</title>
+    <style>
+        /* Basic Reset & Body Styling */
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif; /* Using Inter font as requested */
+            background-color: #e0f2f7; /* Light blue background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #333;
+            overflow: hidden; /* Prevent scrollbars from popping up due to animations */
+        }
+
+        /* Game Container */
+        .game-container {
+            background-color: #ffffff;
+            border-radius: 15px; /* Rounded corners */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15); /* Soft shadow */
+            padding: 30px;
+            text-align: center;
+            width: 100%;
+            max-width: 400px; /* Max width for larger screens */
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative; /* For potential future effects */
+        }
+
+        /* Game Title */
+        h1 {
+            color: #263238; /* Dark blue-grey */
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            letter-spacing: -0.5px;
+        }
+
+        /* Game Status Display */
+        #gameStatus {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #00796b; /* Teal color */
+            min-height: 1.5em; /* Prevent layout shift */
+        }
+
+        /* Tic-Tac-Toe Board Grid */
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 equal columns */
+            grid-template-rows: repeat(3, 1fr); /* 3 equal rows */
+            gap: 8px; /* Space between cells */
+            width: 100%;
+            max-width: 300px; /* Fixed board size */
+            height: 300px; /* Fixed board size */
+            margin: 0 auto; /* Center the board */
+            background-color: #cfd8dc; /* Light grey for grid lines */
+            border-radius: 10px; /* Rounded board corners */
+            overflow: hidden; /* Ensures rounded corners are applied to the grid */
+            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Individual Cells */
+        .cell {
+            width: 100%;
+            height: 100%;
+            background-color: #eceff1; /* Off-white cell background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3.5em; /* Large X/O */
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px; /* Rounded cell corners */
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            color: #455a64; /* Dark grey for X/O */
+            /* Added for pop effect on click */
+            transform: scale(1);
+            position: relative; /* For potential future effects */
+            overflow: hidden;
+        }
+
+        .cell:hover {
+            background-color: #b0bec5; /* Darker on hover */
+            transform: scale(1.02); /* Slight scale on hover */
+        }
+
+        .cell.X {
+            color: #d32f2f; /* Red for X */
+        }
+
+        .cell.O {
+            color: #1976d2; /* Blue for O */
+        }
+
+        /* Animation for placing X/O */
+        .cell.pop-in {
+            animation: popIn 0.2s ease-out;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+
+        .cell.winning-cell {
+            background-color: #81c784; /* Green for winning cells */
+            color: #ffffff; /* White text for winning cells */
+            animation: winningPulse 0.8s infinite alternate; /* More pronounced pulse animation */
+        }
+
+        @keyframes winningPulse {
+            0% { transform: scale(1); box-shadow: 0 0 0px rgba(0,255,0,0.5); }
+            50% { transform: scale(1.1); box-shadow: 0 0 20px rgba(0,255,0,0.8); }
+            100% { transform: scale(1); box-shadow: 0 0 0px rgba(0,255,0,0.5); }
+        }
+
+        /* Reset Button */
+        #resetButton {
+            background-color: #4caf50; /* Green button */
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px; /* Rounded button corners */
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Button shadow */
+            margin-top: 10px;
+            align-self: center; /* Center the button if using flex column */
+            width: fit-content; /* Adjust width to content */
+        }
+
+        #resetButton:hover {
+            background-color: #43a047; /* Darker green on hover */
+            transform: translateY(-2px); /* Lift effect */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        #resetButton:active {
+            background-color: #388e3c; /* Even darker on active */
+            transform: translateY(0); /* Press effect */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .game-container {
+                padding: 20px;
+                border-radius: 10px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            #gameStatus {
+                font-size: 1.2em;
+            }
+
+            .game-board {
+                width: 280px;
+                height: 280px;
+            }
+
+            .cell {
+                font-size: 3em;
+            }
+
+            #resetButton {
+                padding: 10px 20px;
+                font-size: 1em;
+            }
+        }
+    </style>
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Tic-Tac-Toe</h1>
+        <div id="gameStatus">Player X's Turn</div>
+        <div class="game-board" id="gameBoard">
+            <!-- Cells will be dynamically created by JavaScript -->
+        </div>
+        <button id="resetButton">Reset Game</button>
+    </div>
+
+    <script>
+        // Get references to DOM elements
+        const gameBoard = document.getElementById('gameBoard');
+        const gameStatus = document.getElementById('gameStatus');
+        const resetButton = document.getElementById('resetButton');
+
+        // Game state variables
+        let board = ['', '', '', '', '', '', '', '', '']; // Represents the 3x3 board
+        let currentPlayer = 'X'; // 'X' starts the game
+        let gameActive = true; // True if the game is ongoing, false if won or drawn
+
+        // Winning conditions (indices of cells that form a win)
+        const winningConditions = [
+            [0, 1, 2], // Top row
+            [3, 4, 5], // Middle row
+            [6, 7, 8], // Bottom row
+            [0, 3, 6], // Left column
+            [1, 4, 7], // Middle column
+            [2, 5, 8], // Right column
+            [0, 4, 8], // Diagonal from top-left
+            [2, 4, 6]  // Diagonal from top-right
+        ];
+
+        // --- Tone.js Sound Setup ---
+        // Create a simple synth for cell clicks
+        const clickSynth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: {
+                type: "triangle"
+            },
+            envelope: {
+                attack: 0.005,
+                decay: 0.1,
+                sustain: 0.05,
+                release: 0.1
+            }
+        }).toDestination();
+
+        // Create a different synth for win/draw
+        const gameEndSynth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: {
+                type: "sine"
+            },
+            envelope: {
+                attack: 0.01,
+                decay: 0.3,
+                sustain: 0.1,
+                release: 0.5
+            }
+        }).toDestination();
+
+        // Function to play a sound on cell click
+        function playClickSound(player) {
+            if (player === 'X') {
+                clickSynth.triggerAttackRelease("C4", "8n"); // C4 for X
+            } else {
+                clickSynth.triggerAttackRelease("G4", "8n"); // G4 for O
+            }
+        }
+
+        // Function to play a sound on game end (win/draw)
+        function playEndGameSound(isWin) {
+            if (isWin) {
+                gameEndSynth.triggerAttackRelease(["C5", "E5", "G5"], "0.5"); // Triumphant chord for win
+            } else {
+                gameEndSynth.triggerAttackRelease("C3", "0.5"); // Lower single note for draw
+            }
+        }
+        // --- End Tone.js Sound Setup ---
+
+
+        /**
+         * Initializes the game board by creating 9 cell divs and appending them.
+         * Each cell gets a unique data-cell-index and an event listener.
+         */
+        function initializeGame() {
+            gameBoard.innerHTML = ''; // Clear any existing cells
+            board.forEach((cell, index) => {
+                const cellElement = document.createElement('div');
+                cellElement.classList.add('cell');
+                cellElement.dataset.cellIndex = index; // Store index for easy access
+                cellElement.addEventListener('click', handleCellClick);
+                gameBoard.appendChild(cellElement);
+            });
+            gameStatus.textContent = `Player ${currentPlayer}'s Turn`; // Set initial status
+        }
+
+        /**
+         * Handles a click event on a game cell.
+         * @param {Event} event - The click event object.
+         */
+        async function handleCellClick(event) { // Made async to await Tone.start()
+            // Ensure audio context is started on first user interaction
+            if (Tone.context.state !== 'running') {
+                await Tone.start();
+                console.log('AudioContext started');
+            }
+
+            const clickedCell = event.target;
+            const clickedCellIndex = parseInt(clickedCell.dataset.cellIndex);
+
+            // If the cell is already filled or the game is not active, do nothing
+            if (board[clickedCellIndex] !== '' || !gameActive) {
+                return;
+            }
+
+            // Play click sound before updating board visually
+            playClickSound(currentPlayer);
+
+            // Update the game state: board array and cell's visual content
+            board[clickedCellIndex] = currentPlayer;
+            clickedCell.textContent = currentPlayer;
+            clickedCell.classList.add(currentPlayer); // Add class for X/O styling
+
+            // Add pop-in animation class, then remove it after animation
+            clickedCell.classList.add('pop-in');
+            clickedCell.addEventListener('animationend', () => {
+                clickedCell.classList.remove('pop-in');
+            }, { once: true });
+
+
+            // Check for win or draw
+            if (checkWin()) {
+                gameStatus.textContent = `Player ${currentPlayer} Wins!`;
+                gameActive = false;
+                highlightWinningCells(); // Highlight the winning combination
+                playEndGameSound(true); // Play win sound
+                return;
+            }
+
+            if (checkDraw()) {
+                gameStatus.textContent = 'It\'s a Draw!';
+                gameActive = false;
+                playEndGameSound(false); // Play draw sound
+                return;
+            }
+
+            // Switch to the next player
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            gameStatus.textContent = `Player ${currentPlayer}'s Turn`;
+        }
+
+        /**
+         * Checks if the current player has won the game.
+         * @returns {boolean} True if the current player has won, false otherwise.
+         */
+        function checkWin() {
+            let roundWon = false;
+            for (let i = 0; i < winningConditions.length; i++) {
+                const winCondition = winningConditions[i];
+                // Get the values from the board based on the winning condition indices
+                let a = board[winCondition[0]];
+                let b = board[winCondition[1]];
+                let c = board[winCondition[2]];
+
+                // If any cell in the condition is empty, it's not a win yet
+                if (a === '' || b === '' || c === '') {
+                    continue;
+                }
+                // If all three cells match the current player, it's a win
+                if (a === b && b === c) {
+                    roundWon = true;
+                    return true; // Exit early if a win is found
+                }
+            }
+            return roundWon;
+        }
+
+        /**
+         * Highlights the cells that form the winning combination.
+         */
+        function highlightWinningCells() {
+            for (let i = 0; i < winningConditions.length; i++) {
+                const winCondition = winningConditions[i];
+                let a = board[winCondition[0]];
+                let b = board[winCondition[1]];
+                let c = board[winCondition[2]];
+
+                if (a === b && b === c && a === currentPlayer) {
+                    // Add 'winning-cell' class to the winning cells
+                    document.querySelector(`[data-cell-index="${winCondition[0]}"]`).classList.add('winning-cell');
+                    document.querySelector(`[data-cell-index="${winCondition[1]}"]`).classList.add('winning-cell');
+                    document.querySelector(`[data-cell-index="${winCondition[2]}"]`).classList.add('winning-cell');
+                    break; // Only highlight the first winning combo found
+                }
+            }
+        }
+
+        /**
+         * Checks if the game is a draw (all cells filled, no winner).
+         * @returns {boolean} True if it's a draw, false otherwise.
+         */
+        function checkDraw() {
+            // If there are no empty cells and no winner, it's a draw
+            return !board.includes('') && !checkWin();
+        }
+
+        /**
+         * Resets the game to its initial state.
+         */
+        function resetGame() {
+            board = ['', '', '', '', '', '', '', '', '']; // Clear the board array
+            currentPlayer = 'X'; // Reset to player X
+            gameActive = true; // Set game to active
+            gameStatus.textContent = `Player ${currentPlayer}'s Turn`; // Update status
+
+            // Clear visual content and remove styling from all cells
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.textContent = '';
+                cell.classList.remove('X', 'O', 'winning-cell', 'pop-in'); // Also remove pop-in
+            });
+        }
+
+        // Add event listener to the reset button
+        resetButton.addEventListener('click', resetGame);
+
+        // Initialize the game when the page loads
+        window.onload = initializeGame;
+    </script>
+</body>
+</html>
